@@ -1,6 +1,6 @@
 # sdas
 
-```typescript
+```TypeScript
 import {ClientRP, LogLevel, Events} from "@harukadev/presence"
 
 const clientRP = new ClientRP({

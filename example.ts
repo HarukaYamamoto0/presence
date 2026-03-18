@@ -21,7 +21,7 @@ client.on(Events.Ready, (data) => {
 })
 
 client.on(Events.ActivityUpdate, (activity) => {
-	console.log("> Activity updated:", activity.details)
+	console.log("> Activity updated:", JSON.stringify(activity, null, 2))
 })
 
 client.on(Events.Error, (error) => {
@@ -35,10 +35,15 @@ client.on(Events.Disconnect, () => {
 await client.connect()
 
 const activity = new ActivityBuilder()
-	.setState("Exploring the project")
-	.setDetails("Organizing the code...")
-	.setLargeImage("logo", "Presence Lib")
+	.setName('My Awesome App')
+	.setDetails('Developing...')
+	.setState('In Beta')
+	.setLargeImage('https://i.pinimg.com/736x/6c/7f/16/6c7f163f16a052de2222f9e20f69f4ce.jpg', 'App Logo')
 	.setStartTimestamp(new Date())
+	// .addButton({
+	// 	label: "youtube",
+	// 	url: "https://www.youtube.com"
+	// })
 	.build();
 
 await client.setActivity(activity);

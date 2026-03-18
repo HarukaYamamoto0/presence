@@ -4,7 +4,7 @@ import {Activity, ActivityType, Assets, Button, Party, Secrets, Timestamps} from
  * Fluent builder for creating Discord Rich Presence activities.
  *
  * @example
- * ```typescript
+ * ```TypeScript
  * const activity = new ActivityBuilder()
  *   .setName('My Awesome App')
  *   .setDetails('Developing...')

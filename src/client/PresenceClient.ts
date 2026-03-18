@@ -29,8 +29,11 @@ export interface ClientOptions {
 
 export declare interface PresenceClient {
 	on<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
+
 	once<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
+
 	emit<E extends Events>(event: E, data: EventPayloads[E]): boolean;
+
 	off<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
 }
 
@@ -38,7 +41,7 @@ export declare interface PresenceClient {
  * Main client for managing Rich Presence.
  *
  * @example
- * ```typescript
+ * ```TypeScript
  * const client = new PresenceClient({
  *   clientId: '123456789012345678',
  *   logLevel: LogLevel.Debug
@@ -132,7 +135,7 @@ export class PresenceClient extends EventEmitter {
 	 * @returns A promise that resolves to the updated activity.
 	 *
 	 * @example
-	 * ```typescript
+	 * ```TypeScript
 	 * await client.setActivity({
 	 *   state: 'Playing with my friends',
 	 *   details: 'In a competitive match',
@@ -148,10 +151,14 @@ export class PresenceClient extends EventEmitter {
 			throw new Error("Client is not ready. Call connect() first.");
 		}
 
-		return this.sendCommand(RpcCommands.SET_ACTIVITY, {
+		const response = await this.sendCommand(RpcCommands.SET_ACTIVITY, {
 			pid,
 			activity
 		}, SetActivityResponseSchema);
+
+		this.emit(Events.ActivityUpdate, response);
+
+		return response;
 	}
 
 	/**
@@ -277,8 +284,8 @@ export class PresenceClient extends EventEmitter {
 				const error = new Error(result.success ? result.data.message : "Unknown Discord error");
 				this.logger.error(error.message);
 				this.emit(Events.Error, error);
-			} else if (evt === "ACTIVITY_UPDATE") {
-				this.logger.info("Activity updated from Discord");
+			} else if (evt === RpcEvents.ACTIVITY_UPDATE) {
+				this.logger.info("Activity updated from Discord (dispatch)");
 				const result = SetActivityResponseSchema.safeParse(data);
 				if (result.success) {
 					this.emit(Events.ActivityUpdate, result.data);
@@ -288,7 +295,7 @@ export class PresenceClient extends EventEmitter {
 			} else if (evt === RpcEvents.ACTIVITY_SPECTATE) {
 				this.emit(Events.ActivitySpectate, data);
 			} else if (evt === RpcEvents.ACTIVITY_JOIN_REQUEST) {
-				this.emit(Events.ActivitySpectate, data);
+				this.emit(Events.ActivityJoinRequest, data);
 			}
 		} else if (msg.opcode === OpCodes.CLOSE) {
 			this.logger.warn("Received CLOSE opcode from Discord");
