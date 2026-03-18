@@ -1,10 +1,10 @@
 // noinspection ES6PreferShortImport
 
-import {ClientRP} from "./src/index.js"
+import {PresenceClient} from "./src/index.js"
 import {setInterval} from "node:timers";
 import {Events} from "./src/client/Events";
 
-const client = new ClientRP({
+const client = new PresenceClient({
 	clientId: "1445733433153425468"
 })
 

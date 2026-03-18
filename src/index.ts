@@ -1,4 +1,4 @@
-export * from './client/clientRP';
+export * from './client/PresenceClient';
 export * from "./protocols/Decoder"
 export * from "./protocols/encode"
 export * from "./protocols/opcodes"

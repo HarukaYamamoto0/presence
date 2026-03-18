@@ -20,7 +20,7 @@ export interface ClientOptions {
 /**
  * The main client for managing Rich Presence.
  */
-export class ClientRP extends EventEmitter {
+export class PresenceClient extends EventEmitter {
 	private readonly clientId: string;
 	private transport?: Transport;
 	private readonly decoder = new Decoder();
