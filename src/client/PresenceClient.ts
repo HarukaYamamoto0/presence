@@ -89,7 +89,7 @@ export class PresenceClient extends EventEmitter {
 		this.logger.info("Connecting to Discord...");
 
 		if (!this.transport) {
-			this.transport = await TransportFactory.createDefault();
+			this.transport = await TransportFactory.createDefault(this.logger);
 		}
 
 		this.transport.onData((chunk) => {

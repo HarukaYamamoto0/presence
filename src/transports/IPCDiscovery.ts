@@ -1,6 +1,7 @@
 import {Transport} from "../types/transport";
 import {NodeIPCTransport} from "./NodeIPCTransport";
-import {getPlatformResolver, UnixIPCResolver} from "./IPCResolver";
+import {getPlatformResolver} from "./IPCResolver";
+import {Logger} from "../utils/Logger";
 
 /**
  * Utility for discovering and connecting to a Discord instance via IPC.
@@ -8,36 +9,27 @@ import {getPlatformResolver, UnixIPCResolver} from "./IPCResolver";
 export class IPCDiscovery {
 	/**
 	 * Searches for an active Discord instance by trying various IPC paths.
+	 * @param logger Optional logger for discovery events.
 	 * @returns A connected transport instance.
 	 * @throws Error if no instance is found.
 	 */
-	static async findTransport(): Promise<Transport> {
+	static async findTransport(logger?: Logger): Promise<Transport> {
 		const resolver = getPlatformResolver();
 
-		// Try standard paths (0-9)
+		// Try all possible endpoints for each index (0-9)
 		for (let i = 0; i < 10; i++) {
-			const path = resolver.getEndpoint(i);
-			const transport = new NodeIPCTransport(path);
+			const paths = resolver.getEndpoints(i);
 
-			try {
-				await transport.connect();
-				return transport;
-			} catch (err) {
-				// Keep searching if it fails
-			}
-		}
-
-		// Try Flatpak if we're on Unix
-		if (resolver instanceof UnixIPCResolver) {
-			for (let i = 0; i < 10; i++) {
-				const path = resolver.getFlatpakEndpoint(i);
+			for (const path of paths) {
+				logger?.debug(`Attempting IPC connection to: ${path}`);
 				const transport = new NodeIPCTransport(path);
 
 				try {
 					await transport.connect();
+					logger?.info(`Connected to Discord instance via IPC: ${path}`);
 					return transport;
 				} catch (err) {
-					// TODO: Keep searching if it fails
+					// Keep searching if it fails
 				}
 			}
 		}

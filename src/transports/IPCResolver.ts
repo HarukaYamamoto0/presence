@@ -6,15 +6,15 @@ export interface IPCResolver {
 	 * Returns a list of possible paths for the Discord socket.
 	 * @param index The socket index (0-9).
 	 */
-	getEndpoint(index: number): string;
+	getEndpoints(index: number): string[];
 }
 
 /**
  * IPC socket resolver for Windows-based systems.
  */
 export class WindowsIPCResolver implements IPCResolver {
-	getEndpoint(index: number): string {
-		return `\\\\?\\pipe\\discord-ipc-${index}`;
+	getEndpoints(index: number): string[] {
+		return [`\\\\?\\pipe\\discord-ipc-${index}`];
 	}
 }
 
@@ -22,7 +22,17 @@ export class WindowsIPCResolver implements IPCResolver {
  * IPC socket resolver for Unix-based systems (Linux, macOS).
  */
 export class UnixIPCResolver implements IPCResolver {
-	getEndpoint(index: number): string {
+	private static readonly SEARCH_PATHS = [
+		'',
+		'app/com.discordapp.Discord/',
+		'app/dev.vencord.Vesktop/',
+		'.flatpak/com.discordapp.Discord/xdg-run/',
+		'.flatpak/dev.vencord.Vesktop/xdg-run/',
+		'snap.discord-canary/',
+		'snap.discord/',
+	];
+
+	getEndpoints(index: number): string[] {
 		const base =
 			process.env.XDG_RUNTIME_DIR ??
 			process.env.TMPDIR ??
@@ -30,16 +40,7 @@ export class UnixIPCResolver implements IPCResolver {
 			process.env.TEMP ??
 			'/tmp';
 
-		return `${base}/discord-ipc-${index}`;
-	}
-
-	/**
-	 * Returns flatpak specific paths.
-	 * Flatpak can access common runtime directories, but sometimes they are namespaced.
-	 */
-	getFlatpakEndpoint(index: number): string {
-		const base = process.env.XDG_RUNTIME_DIR ?? '/run/user/1000';
-		return `${base}/app/com.discordapp.Discord/discord-ipc-${index}`;
+		return UnixIPCResolver.SEARCH_PATHS.map((path) => `${base}/${path}discord-ipc-${index}`);
 	}
 }
 

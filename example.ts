@@ -4,7 +4,7 @@ import {PresenceClient, Events, ActivityBuilder, LogLevel} from "./src/index.js"
 
 const client = new PresenceClient({
 	clientId: "1445733433153425468",
-	logLevel: LogLevel.Silent
+	logLevel: LogLevel.Trace
 })
 
 client.on(Events.Connecting, () => {
