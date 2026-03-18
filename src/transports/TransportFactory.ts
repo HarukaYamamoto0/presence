@@ -1,4 +1,4 @@
-import {Transport} from "../types";
+import {Transport} from "../types/transport";
 import {IPCDiscovery} from "./IPCDiscovery";
 import {WebSocketTransport} from "./WebSocketTransport";
 

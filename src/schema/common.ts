@@ -1,4 +1,5 @@
 import * as zod from 'zod';
+import {ActivityType} from "../structures/Activity";
 
 export const UserSchema = zod.object({
 	id: zod.string(),
@@ -18,7 +19,7 @@ export const UserSchema = zod.object({
 	premium_type: zod.number().optional().nullable(),
 });
 
-export const ActivityTypeSchema = zod.number();
+export const ActivityTypeSchema = zod.nativeEnum(ActivityType);
 
 export const TimestampsSchema = zod.object({
 	start: zod.number().optional(),
@@ -60,7 +61,7 @@ export const ActivitySchema = zod.object({
 	party: PartySchema,
 	assets: AssetsSchema,
 	secrets: SecretsSchema,
-	buttons: zod.array(ButtonSchema).optional().nullable(),
+	buttons: zod.array(ButtonSchema).max(2).optional().nullable(),
 	type: ActivityTypeSchema.optional(),
 	instance: zod.boolean().optional().nullable(),
 	flags: zod.number().optional().nullable(),

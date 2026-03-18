@@ -1,4 +1,4 @@
-import {Transport} from "../types";
+import {Transport} from "../types/transport";
 import {NodeIPCTransport} from "./NodeIPCTransport";
 import {getPlatformResolver, UnixIPCResolver} from "./IPCResolver";
 

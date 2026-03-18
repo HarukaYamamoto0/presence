@@ -7,17 +7,17 @@ import {SetActivityResponseSchema} from "../schema/commands";
 import {encode} from "../protocols/encode";
 import {Decoder} from "../protocols/Decoder";
 import {Events, EventPayloads} from "./Events";
-import {Transport} from "../types";
+import {Transport} from "../types/transport";
 import {Activity} from "../structures/Activity";
 import {ReadyData} from "../structures/User";
-import {OpCodes} from "../constants";
+import {OpCodes, RpcCommands, RpcEvents} from "../constants";
 import {Logger, createDefaultLogger, LogLevel} from "../utils/Logger";
 
 /**
  * Options for the Rich Presence client.
  */
 export interface ClientOptions {
-	/** Your Discord application's client ID. */
+	/** Application ID (Client ID) of your bot on Discord. */
 	clientId: string;
 	/** Custom transport implementation (optional). */
 	transport?: Transport;
@@ -35,7 +35,21 @@ export declare interface PresenceClient {
 }
 
 /**
- * The main client for managing Rich Presence.
+ * Main client for managing Rich Presence.
+ *
+ * @example
+ * ```typescript
+ * const client = new PresenceClient({
+ *   clientId: '123456789012345678',
+ *   logLevel: LogLevel.Debug
+ * });
+ *
+ * client.on(Events.Ready, (data) => {
+ *   console.log(`Logged in as ${data.user.username}`);
+ * });
+ *
+ * await client.connect();
+ * ```
  */
 export class PresenceClient extends EventEmitter {
 	private readonly clientId: string;
@@ -55,15 +69,16 @@ export class PresenceClient extends EventEmitter {
 	}
 
 	/**
-	 * Indicates if the client is currently connected and ready.
+	 * Indicates whether the client is connected and ready for use.
 	 */
 	get isReady(): boolean {
 		return this._ready;
 	}
 
 	/**
-	 * Connects the client to the Discord IPC socket.
-	 * @throws Error if the client is already connected or no Discord instance is found.
+	 * Connects the client to Discord's IPC.
+	 * @throws Error if the client is already connected or if no Discord instance is found.
+	 * @returns A promise that resolves to the client once it's ready.
 	 */
 	async connect(): Promise<this> {
 		if (this._ready) {
@@ -111,16 +126,29 @@ export class PresenceClient extends EventEmitter {
 	}
 
 	/**
-	 * Sets the user's presence activity.
+	 * Sets the user's Rich Presence activity.
 	 * @param activity The activity to set.
 	 * @param pid The process ID (defaults to the current process).
+	 * @returns A promise that resolves to the updated activity.
+	 *
+	 * @example
+	 * ```typescript
+	 * await client.setActivity({
+	 *   state: 'Playing with my friends',
+	 *   details: 'In a competitive match',
+	 *   assets: {
+	 *     large_image: 'map_de_dust2',
+	 *     large_text: 'Dust II'
+	 *   }
+	 * });
+	 * ```
 	 */
 	async setActivity(activity: Activity, pid: number = process.pid): Promise<Activity> {
 		if (!this._ready || !this.transport) {
 			throw new Error("Client is not ready. Call connect() first.");
 		}
 
-		return this.sendCommand("SET_ACTIVITY", {
+		return this.sendCommand(RpcCommands.SET_ACTIVITY, {
 			pid,
 			activity
 		}, SetActivityResponseSchema);
@@ -128,6 +156,11 @@ export class PresenceClient extends EventEmitter {
 
 	/**
 	 * Sends a command to Discord and waits for the response.
+	 * @param cmd The command to send.
+	 * @param args The arguments for the command.
+	 * @param schema Optional Zod schema to validate the response.
+	 * @returns A promise that resolves to the response data.
+	 * @internal
 	 */
 	async sendCommand<T>(cmd: string, args: any, schema?: zod.ZodSchema<T>): Promise<T> {
 		if (!this.transport) throw new Error("Transport not connected");
@@ -167,6 +200,7 @@ export class PresenceClient extends EventEmitter {
 
 	/**
 	 * Disconnects and reconnects the client.
+	 * @returns A promise that resolves when reconnection is complete.
 	 */
 	async reconnect(): Promise<void> {
 		await this.disconnect();
@@ -175,6 +209,7 @@ export class PresenceClient extends EventEmitter {
 
 	/**
 	 * Disconnects the client from Discord.
+	 * @returns A promise that resolves when disconnection is complete.
 	 */
 	async disconnect(): Promise<void> {
 		if (!this.transport && !this._ready) return;
@@ -189,6 +224,10 @@ export class PresenceClient extends EventEmitter {
 		this.emit(Events.Disconnect, undefined as any);
 	}
 
+	/**
+	 * Sends the initial handshake to Discord.
+	 * @internal
+	 */
 	async sendHandshake(): Promise<void> {
 		if (!this.transport) return;
 
@@ -212,7 +251,7 @@ export class PresenceClient extends EventEmitter {
 				const {resolve, reject} = this.pendingCommands.get(nonce)!;
 				this.pendingCommands.delete(nonce);
 
-				if (evt === "ERROR") {
+				if (evt === RpcEvents.ERROR) {
 					const result = ErrorEventSchema.safeParse(data);
 					const error = new Error(result.success ? result.data.message : "Discord error");
 					this.logger.error("Discord error response", {nonce, message: error.message});
@@ -223,7 +262,7 @@ export class PresenceClient extends EventEmitter {
 				return;
 			}
 
-			if (evt === "READY") {
+			if (evt === RpcEvents.READY) {
 				const result = ReadyEventSchema.safeParse(data);
 				if (result.success) {
 					this._ready = true;
@@ -233,7 +272,7 @@ export class PresenceClient extends EventEmitter {
 					this.logger.error(error.message);
 					this.emit(Events.Error, error);
 				}
-			} else if (evt === "ERROR") {
+			} else if (evt === RpcEvents.ERROR) {
 				const result = ErrorEventSchema.safeParse(data);
 				const error = new Error(result.success ? result.data.message : "Unknown Discord error");
 				this.logger.error(error.message);
@@ -244,12 +283,12 @@ export class PresenceClient extends EventEmitter {
 				if (result.success) {
 					this.emit(Events.ActivityUpdate, result.data);
 				}
-			} else if (evt === "ACTIVITY_JOIN") {
+			} else if (evt === RpcEvents.ACTIVITY_JOIN) {
 				this.emit(Events.ActivityJoin, data);
-			} else if (evt === "ACTIVITY_SPECTATE") {
+			} else if (evt === RpcEvents.ACTIVITY_SPECTATE) {
 				this.emit(Events.ActivitySpectate, data);
-			} else if (evt === "ACTIVITY_JOIN_REQUEST") {
-				this.emit(Events.ActivityJoinRequest, data);
+			} else if (evt === RpcEvents.ACTIVITY_JOIN_REQUEST) {
+				this.emit(Events.ActivitySpectate, data);
 			}
 		} else if (msg.opcode === OpCodes.CLOSE) {
 			this.logger.warn("Received CLOSE opcode from Discord");

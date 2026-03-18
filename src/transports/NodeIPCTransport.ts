@@ -1,5 +1,5 @@
 import net from 'net';
-import {Transport} from "../types";
+import {Transport} from "../types/transport";
 
 export class NodeIPCTransport implements Transport {
 	private socket!: net.Socket;

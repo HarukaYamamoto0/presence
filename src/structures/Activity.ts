@@ -1,5 +1,5 @@
 import * as zod from 'zod';
-import {ActivitySchema, ActivityTypeSchema, AssetsSchema, ButtonSchema, PartySchema, SecretsSchema, TimestampsSchema} from "../schema/common";
+import {ActivitySchema, AssetsSchema, ButtonSchema, PartySchema, SecretsSchema, TimestampsSchema} from "../schema/common";
 
 export type Activity = zod.infer<typeof ActivitySchema>;
 export type Timestamps = zod.infer<typeof TimestampsSchema>;
@@ -8,6 +8,9 @@ export type Assets = zod.infer<typeof AssetsSchema>;
 export type Secrets = zod.infer<typeof SecretsSchema>;
 export type Button = zod.infer<typeof ButtonSchema>;
 
+/**
+ * Discord Activity Types
+ */
 export enum ActivityType {
 	Playing = 0,
 	Streaming = 1,
