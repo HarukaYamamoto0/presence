@@ -3,9 +3,10 @@ import {TransportFactory} from "../transports/TransportFactory";
 import {OPCODE} from "../protocols/opcodes";
 import {encode} from "../protocols/encode";
 import {Decoder} from "../protocols/Decoder";
-import {Events} from "./Events";
+import {Events, EventPayloads} from "./Events";
 import {Transport} from "../types";
 import {Activity} from "../structures/Activity";
+import {ReadyData} from "../structures/User";
 
 /**
  * Options for the Rich Presence client.
@@ -15,6 +16,13 @@ export interface ClientOptions {
 	clientId: string;
 	/** Custom transport implementation (optional). */
 	transport?: Transport;
+}
+
+export declare interface PresenceClient {
+	on<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
+	once<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
+	emit<E extends Events>(event: E, data: EventPayloads[E]): boolean;
+	off<E extends Events>(event: E, listener: (data: EventPayloads[E]) => void): this;
 }
 
 /**
@@ -87,23 +95,40 @@ export class PresenceClient extends EventEmitter {
 	 * @param activity The activity to set.
 	 * @param pid The process ID (defaults to the current process).
 	 */
-	async setActivity(activity: Activity, pid: number = process.pid): Promise<void> {
+	async setActivity(activity: Activity, pid: number = process.pid): Promise<Activity> {
 		if (!this._ready || !this.transport) {
 			throw new Error("Client is not ready. Call connect() first.");
 		}
 
 		const nonce = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
-		this.transport.write(
-			encode(OPCODE.FRAME, {
-				cmd: "SET_ACTIVITY",
-				args: {
-					pid,
-					activity
-				},
-				nonce
-			})
-		);
+		return new Promise((resolve, reject) => {
+			const handler = (msg: { opcode: OPCODE; data: any }) => {
+				if (msg.opcode === OPCODE.FRAME && msg.data.nonce === nonce) {
+					this.off("message" as any, handler);
+					if (msg.data.evt === "ERROR") {
+						reject(new Error(msg.data.data.message || "Failed to set activity"));
+					} else {
+						const updatedActivity = msg.data.data as Activity;
+						this.emit(Events.ActivityUpdate, updatedActivity);
+						resolve(updatedActivity);
+					}
+				}
+			};
+
+			this.on("message" as any, handler);
+
+			this.transport!.write(
+				encode(OPCODE.FRAME, {
+					cmd: "SET_ACTIVITY",
+					args: {
+						pid,
+						activity
+					},
+					nonce
+				})
+			);
+		});
 	}
 
 	/**
@@ -126,7 +151,7 @@ export class PresenceClient extends EventEmitter {
 		}
 
 		this._ready = false;
-		this.emit(Events.Disconnect);
+		this.emit(Events.Disconnect, undefined as any);
 	}
 
 	async sendHandshake(): Promise<void> {
@@ -145,13 +170,13 @@ export class PresenceClient extends EventEmitter {
 			const {evt, data} = msg.data || {};
 			if (evt === "READY") {
 				this._ready = true;
-				this.emit(Events.Ready, data);
+				this.emit(Events.Ready, data as ReadyData);
 			}
 		} else if (msg.opcode === OPCODE.CLOSE) {
 			this.disconnect();
 		}
 
 		// Emit all raw messages for advanced usage
-		this.emit("message", msg);
+		this.emit("message" as any, msg);
 	}
 }

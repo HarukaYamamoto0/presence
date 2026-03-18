@@ -1,15 +1,18 @@
 // noinspection ES6PreferShortImport
 
-import {PresenceClient} from "./src/index.js"
-import {setInterval} from "node:timers";
-import {Events} from "./src/client/Events";
+import {PresenceClient, Events, ActivityBuilder} from "./src/index.js"
 
 const client = new PresenceClient({
 	clientId: "1445733433153425468"
 })
 
-client.on(Events.Ready, () => {
+client.on(Events.Ready, (data) => {
 	console.log("> Successfully connected ✅")
+	console.log(`> Logged in as ${data.user.username}#${data.user.discriminator} (${data.user.id})`)
+})
+
+client.on(Events.ActivityUpdate, (activity) => {
+	console.log("> Activity updated:", activity.details)
 })
 
 client.on(Events.Error, (error) => {
@@ -22,14 +25,14 @@ client.on(Events.Disconnect, () => {
 
 await client.connect()
 
-await client.setActivity({
-	state: "Exploring the project",
-	details: "Organizing the code...",
-	assets: {
-		large_image: "logo",
-		large_text: "Presence Lib"
-	}
-});
+const activity = new ActivityBuilder()
+	.setState("Exploring the project")
+	.setDetails("Organizing the code...")
+	.setLargeImage("logo", "Presence Lib")
+	.setStartTimestamp(new Date())
+	.build();
+
+await client.setActivity(activity);
 
 await new Promise(resolve => setTimeout(resolve, 20000))
 

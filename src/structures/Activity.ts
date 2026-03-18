@@ -10,17 +10,18 @@ export interface Activity {
 	secrets?: Secrets;
 	buttons?: Button[];
 	type?: ActivityType;
-	status_display_type?: StatusDisplayType;
+	instance?: boolean;
+	flags?: number;
 }
 
 export interface Timestamps {
-	start?: number; // i64 -> number (ms)
+	start?: number;
 	end?: number;
 }
 
 export interface Party {
 	id?: string;
-	size?: [number, number]; // [current, max]
+	size?: [number, number];
 }
 
 export interface Assets {
@@ -45,13 +46,9 @@ export interface Button {
 
 export enum ActivityType {
 	Playing = 0,
+	Streaming = 1,
 	Listening = 2,
 	Watching = 3,
+	Custom = 4,
 	Competing = 5,
-}
-
-export enum StatusDisplayType {
-	Name = 0,
-	State = 1,
-	Details = 2,
 }
