@@ -1,10 +1,18 @@
 // noinspection ES6PreferShortImport
 
-import {PresenceClient, Events, ActivityBuilder, WebSocketTransport, NodeIPCTransport} from "./src/index.js"
+import {PresenceClient, Events, ActivityBuilder, LogLevel} from "./src/index.js"
 
 const client = new PresenceClient({
 	clientId: "1445733433153425468",
-	transport: new NodeIPCTransport("/tmp/discord-ipc-0")
+	logLevel: LogLevel.Silent
+})
+
+client.on(Events.Connecting, () => {
+	console.log("> Connecting to Discord...")
+})
+
+client.on(Events.Connected, () => {
+	console.log("> Connected to transport ✅")
 })
 
 client.on(Events.Ready, (data) => {

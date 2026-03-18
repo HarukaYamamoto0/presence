@@ -1,5 +1,6 @@
 import * as zod from 'zod';
 import EventEmitter from "node:events"
+import crypto from "node:crypto";
 import {TransportFactory} from "../transports/TransportFactory";
 import {ReadyEventSchema, ErrorEventSchema} from "../schema/events";
 import {SetActivityResponseSchema} from "../schema/commands";
@@ -10,6 +11,7 @@ import {Transport} from "../types";
 import {Activity} from "../structures/Activity";
 import {ReadyData} from "../structures/User";
 import {OpCodes} from "../constants";
+import {Logger, createDefaultLogger, LogLevel} from "../utils/Logger";
 
 /**
  * Options for the Rich Presence client.
@@ -19,6 +21,10 @@ export interface ClientOptions {
 	clientId: string;
 	/** Custom transport implementation (optional). */
 	transport?: Transport;
+	/** Custom logger implementation (optional). */
+	logger?: Logger;
+	/** Log level for the default logger (optional). */
+	logLevel?: LogLevel;
 }
 
 export declare interface PresenceClient {
@@ -36,11 +42,13 @@ export class PresenceClient extends EventEmitter {
 	private transport?: Transport;
 	private readonly decoder = new Decoder();
 	private _ready: boolean = false;
+	private readonly logger: Logger;
 	private pendingCommands = new Map<string, { resolve: (data: any) => void; reject: (err: Error) => void }>();
 
 	constructor(options: ClientOptions) {
 		super();
 		this.clientId = options.clientId;
+		this.logger = options.logger ?? createDefaultLogger(options.logLevel ?? LogLevel.Info);
 		if (options.transport) {
 			this.transport = options.transport;
 		}
@@ -62,11 +70,15 @@ export class PresenceClient extends EventEmitter {
 			throw new Error("Client is already connected.");
 		}
 
+		this.emit(Events.Connecting, undefined as any);
+		this.logger.info("Connecting to Discord...");
+
 		if (!this.transport) {
 			this.transport = await TransportFactory.createDefault();
 		}
 
 		this.transport.onData((chunk) => {
+			this.emit(Events.Debug, `Received ${chunk.length} bytes`);
 			const messages = this.decoder.push(chunk);
 			for (const msg of messages) {
 				this.handleMessage(msg);
@@ -74,22 +86,26 @@ export class PresenceClient extends EventEmitter {
 		});
 
 		this.transport.onClose(() => {
+			this.logger.warn("Transport connection closed");
 			this.disconnect();
 		});
 
+		this.emit(Events.Connected, undefined as any);
 		await this.sendHandshake();
 
 		return new Promise((resolve, reject) => {
-			const onReady = () => {
+			const onReady = (data: ReadyData) => {
 				this.off(Events.Disconnect, onDisconnect);
+				this.logger.info(`Connected as ${data.user.username}#${data.user.discriminator}`);
 				resolve(this);
 			};
 			const onDisconnect = () => {
-				this.off(Events.Ready, onReady);
+				this.off(Events.Ready, onReady as any);
+				this.logger.error("Connection failed or closed before ready");
 				reject(new Error("Connection closed before ready."));
 			};
 
-			this.once(Events.Ready, onReady);
+			this.once(Events.Ready, onReady as any);
 			this.once(Events.Disconnect, onDisconnect);
 		});
 	}
@@ -117,19 +133,26 @@ export class PresenceClient extends EventEmitter {
 		if (!this.transport) throw new Error("Transport not connected");
 
 		const nonce = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+		this.logger.debug(`Sending command ${cmd}`, {args, nonce});
 
 		return new Promise((resolve, reject) => {
 			this.pendingCommands.set(nonce, {
 				resolve: (data) => {
+					this.logger.debug(`Received response for ${cmd}`, {nonce});
 					if (!schema) return resolve(data as T);
 					const result = schema.safeParse(data);
 					if (result.success) {
 						resolve(result.data);
 					} else {
-						reject(new Error(`Invalid response for ${cmd}: ${result.error.message}`));
+						const error = new Error(`Invalid response for ${cmd}: ${result.error.message}`);
+						this.logger.error(error.message);
+						reject(error);
 					}
 				},
-				reject
+				reject: (err) => {
+					this.logger.error(`Command ${cmd} failed`, {nonce, error: err.message});
+					reject(err);
+				}
 			});
 
 			this.transport!.write(
@@ -156,6 +179,7 @@ export class PresenceClient extends EventEmitter {
 	async disconnect(): Promise<void> {
 		if (!this.transport && !this._ready) return;
 
+		this.logger.info("Disconnecting...");
 		if (this.transport) {
 			this.transport.close();
 			this.transport = undefined;
@@ -168,6 +192,7 @@ export class PresenceClient extends EventEmitter {
 	async sendHandshake(): Promise<void> {
 		if (!this.transport) return;
 
+		this.logger.debug("Sending handshake...");
 		this.transport.write(
 			encode(OpCodes.HANDSHAKE, {
 				v: 1,
@@ -177,6 +202,9 @@ export class PresenceClient extends EventEmitter {
 	}
 
 	private handleMessage(msg: { opcode: OpCodes; data: any }) {
+		this.emit(Events.Raw, msg);
+		this.logger.trace?.("Received message", msg);
+
 		if (msg.opcode === OpCodes.FRAME) {
 			const {evt, data, nonce} = msg.data || {};
 
@@ -186,7 +214,9 @@ export class PresenceClient extends EventEmitter {
 
 				if (evt === "ERROR") {
 					const result = ErrorEventSchema.safeParse(data);
-					reject(new Error(result.success ? result.data.message : "Discord error"));
+					const error = new Error(result.success ? result.data.message : "Discord error");
+					this.logger.error("Discord error response", {nonce, message: error.message});
+					reject(error);
 					return;
 				}
 				resolve(data);
@@ -199,23 +229,31 @@ export class PresenceClient extends EventEmitter {
 					this._ready = true;
 					this.emit(Events.Ready, result.data);
 				} else {
-					this.emit(Events.Error, new Error("Invalid READY payload: " + result.error.message));
+					const error = new Error("Invalid READY payload: " + result.error.message);
+					this.logger.error(error.message);
+					this.emit(Events.Error, error);
 				}
 			} else if (evt === "ERROR") {
 				const result = ErrorEventSchema.safeParse(data);
-				this.emit(Events.Error, new Error(result.success ? result.data.message : "Unknown Discord error"));
+				const error = new Error(result.success ? result.data.message : "Unknown Discord error");
+				this.logger.error(error.message);
+				this.emit(Events.Error, error);
 			} else if (evt === "ACTIVITY_UPDATE") {
-				// This might be sent by Discord when activity changes via other means
+				this.logger.info("Activity updated from Discord");
 				const result = SetActivityResponseSchema.safeParse(data);
 				if (result.success) {
 					this.emit(Events.ActivityUpdate, result.data);
 				}
+			} else if (evt === "ACTIVITY_JOIN") {
+				this.emit(Events.ActivityJoin, data);
+			} else if (evt === "ACTIVITY_SPECTATE") {
+				this.emit(Events.ActivitySpectate, data);
+			} else if (evt === "ACTIVITY_JOIN_REQUEST") {
+				this.emit(Events.ActivityJoinRequest, data);
 			}
 		} else if (msg.opcode === OpCodes.CLOSE) {
+			this.logger.warn("Received CLOSE opcode from Discord");
 			this.disconnect();
 		}
-
-		// Emit all raw messages for advanced usage
-		this.emit("message" as any, msg);
 	}
 }
