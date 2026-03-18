@@ -1,9 +1,10 @@
 // noinspection ES6PreferShortImport
 
-import {PresenceClient, Events, ActivityBuilder} from "./src/index.js"
+import {PresenceClient, Events, ActivityBuilder, WebSocketTransport, NodeIPCTransport} from "./src/index.js"
 
 const client = new PresenceClient({
-	clientId: "1445733433153425468"
+	clientId: "1445733433153425468",
+	transport: new NodeIPCTransport("/tmp/discord-ipc-0")
 })
 
 client.on(Events.Ready, (data) => {

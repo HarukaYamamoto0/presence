@@ -2,7 +2,7 @@ export * from './client/PresenceClient';
 export * from "./client/Events";
 export * from "./protocols/Decoder"
 export * from "./protocols/encode"
-export * from "./protocols/opcodes"
+export * from "./constants"
 export * from "./structures/Activity"
 export * from "./structures/User"
 export * from "./builders/ActivityBuilder"
@@ -14,3 +14,4 @@ export * from "./transports/TransportFactory"
 export * from "./transports/IPCDiscovery"
 export * from "./transports/NodeIPCTransport"
 export * from "./transports/IPCResolver"
+export * from "./transports/WebSocketTransport"

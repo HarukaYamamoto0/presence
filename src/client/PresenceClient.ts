@@ -1,14 +1,15 @@
+import * as zod from 'zod';
 import EventEmitter from "node:events"
 import {TransportFactory} from "../transports/TransportFactory";
 import {ReadyEventSchema, ErrorEventSchema} from "../schema/events";
 import {SetActivityResponseSchema} from "../schema/commands";
-import {OPCODE} from "../protocols/opcodes";
 import {encode} from "../protocols/encode";
 import {Decoder} from "../protocols/Decoder";
 import {Events, EventPayloads} from "./Events";
 import {Transport} from "../types";
 import {Activity} from "../structures/Activity";
 import {ReadyData} from "../structures/User";
+import {OpCodes} from "../constants";
 
 /**
  * Options for the Rich Presence client.
@@ -35,6 +36,7 @@ export class PresenceClient extends EventEmitter {
 	private transport?: Transport;
 	private readonly decoder = new Decoder();
 	private _ready: boolean = false;
+	private pendingCommands = new Map<string, { resolve: (data: any) => void; reject: (err: Error) => void }>();
 
 	constructor(options: ClientOptions) {
 		super();
@@ -102,37 +104,38 @@ export class PresenceClient extends EventEmitter {
 			throw new Error("Client is not ready. Call connect() first.");
 		}
 
+		return this.sendCommand("SET_ACTIVITY", {
+			pid,
+			activity
+		}, SetActivityResponseSchema);
+	}
+
+	/**
+	 * Sends a command to Discord and waits for the response.
+	 */
+	async sendCommand<T>(cmd: string, args: any, schema?: zod.ZodSchema<T>): Promise<T> {
+		if (!this.transport) throw new Error("Transport not connected");
+
 		const nonce = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
 
 		return new Promise((resolve, reject) => {
-			const handler = (msg: { opcode: OPCODE; data: any }) => {
-				if (msg.opcode === OPCODE.FRAME && msg.data.nonce === nonce) {
-					this.off("message" as any, handler);
-					if (msg.data.evt === "ERROR") {
-						const result = ErrorEventSchema.safeParse(msg.data.data);
-						reject(new Error(result.success ? result.data.message : "Failed to set activity"));
+			this.pendingCommands.set(nonce, {
+				resolve: (data) => {
+					if (!schema) return resolve(data as T);
+					const result = schema.safeParse(data);
+					if (result.success) {
+						resolve(result.data);
 					} else {
-						const result = SetActivityResponseSchema.safeParse(msg.data.data);
-						if (result.success) {
-							const updatedActivity = result.data;
-							this.emit(Events.ActivityUpdate, updatedActivity);
-							resolve(updatedActivity);
-						} else {
-							reject(new Error("Invalid SET_ACTIVITY response: " + result.error.message));
-						}
+						reject(new Error(`Invalid response for ${cmd}: ${result.error.message}`));
 					}
-				}
-			};
-
-			this.on("message" as any, handler);
+				},
+				reject
+			});
 
 			this.transport!.write(
-				encode(OPCODE.FRAME, {
-					cmd: "SET_ACTIVITY",
-					args: {
-						pid,
-						activity
-					},
+				encode(OpCodes.FRAME, {
+					cmd,
+					args,
 					nonce
 				})
 			);
@@ -166,16 +169,30 @@ export class PresenceClient extends EventEmitter {
 		if (!this.transport) return;
 
 		this.transport.write(
-			encode(OPCODE.HANDSHAKE, {
+			encode(OpCodes.HANDSHAKE, {
 				v: 1,
 				client_id: this.clientId
 			})
 		);
 	}
 
-	private handleMessage(msg: { opcode: OPCODE; data: any }) {
-		if (msg.opcode === OPCODE.FRAME) {
+	private handleMessage(msg: { opcode: OpCodes; data: any }) {
+		if (msg.opcode === OpCodes.FRAME) {
 			const {evt, data, nonce} = msg.data || {};
+
+			if (nonce && this.pendingCommands.has(nonce)) {
+				const {resolve, reject} = this.pendingCommands.get(nonce)!;
+				this.pendingCommands.delete(nonce);
+
+				if (evt === "ERROR") {
+					const result = ErrorEventSchema.safeParse(data);
+					reject(new Error(result.success ? result.data.message : "Discord error"));
+					return;
+				}
+				resolve(data);
+				return;
+			}
+
 			if (evt === "READY") {
 				const result = ReadyEventSchema.safeParse(data);
 				if (result.success) {
@@ -187,8 +204,14 @@ export class PresenceClient extends EventEmitter {
 			} else if (evt === "ERROR") {
 				const result = ErrorEventSchema.safeParse(data);
 				this.emit(Events.Error, new Error(result.success ? result.data.message : "Unknown Discord error"));
+			} else if (evt === "ACTIVITY_UPDATE") {
+				// This might be sent by Discord when activity changes via other means
+				const result = SetActivityResponseSchema.safeParse(data);
+				if (result.success) {
+					this.emit(Events.ActivityUpdate, result.data);
+				}
 			}
-		} else if (msg.opcode === OPCODE.CLOSE) {
+		} else if (msg.opcode === OpCodes.CLOSE) {
 			this.disconnect();
 		}
 

@@ -32,6 +32,15 @@ export class UnixIPCResolver implements IPCResolver {
 
 		return `${base}/discord-ipc-${index}`;
 	}
+
+	/**
+	 * Returns flatpak specific paths.
+	 * Flatpak can access common runtime directories, but sometimes they are namespaced.
+	 */
+	getFlatpakEndpoint(index: number): string {
+		const base = process.env.XDG_RUNTIME_DIR ?? '/run/user/1000';
+		return `${base}/app/com.discordapp.Discord/discord-ipc-${index}`;
+	}
 }
 
 /**

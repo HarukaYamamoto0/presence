@@ -6,8 +6,10 @@ export interface Transport {
 	close(): void;
 }
 
-export enum Platform {
-	Linux,
-	Windows
+interface HandshakePayload {
+	v: number;
+	encoding: string;
+	client_id: string;
+	frame_id: string;
+	sdk_version?: string;
 }
-

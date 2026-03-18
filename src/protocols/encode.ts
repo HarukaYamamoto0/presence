@@ -1,6 +1,6 @@
-import {OPCODE} from "./opcodes";
+import {OpCodes} from "../constants";
 
-export function encode(opcode: OPCODE, payload: object): Buffer {
+export function encode(opcode: OpCodes, payload: object): Buffer {
 	const json = Buffer.from(JSON.stringify(payload));
 	const header = Buffer.alloc(8);
 
