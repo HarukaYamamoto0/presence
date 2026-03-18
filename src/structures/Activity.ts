@@ -1,48 +1,12 @@
-export interface Activity {
-	name?: string;
-	state?: string;
-	state_url?: string;
-	details?: string;
-	details_url?: string;
-	timestamps?: Timestamps;
-	party?: Party;
-	assets?: Assets;
-	secrets?: Secrets;
-	buttons?: Button[];
-	type?: ActivityType;
-	instance?: boolean;
-	flags?: number;
-}
+import * as zod from 'zod';
+import {ActivitySchema, ActivityTypeSchema, AssetsSchema, ButtonSchema, PartySchema, SecretsSchema, TimestampsSchema} from "../schema/common";
 
-export interface Timestamps {
-	start?: number;
-	end?: number;
-}
-
-export interface Party {
-	id?: string;
-	size?: [number, number];
-}
-
-export interface Assets {
-	large_image?: string;
-	large_text?: string;
-	large_url?: string;
-	small_image?: string;
-	small_text?: string;
-	small_url?: string;
-}
-
-export interface Secrets {
-	join?: string;
-	spectate?: string;
-	match?: string;
-}
-
-export interface Button {
-	label: string;
-	url: string;
-}
+export type Activity = zod.infer<typeof ActivitySchema>;
+export type Timestamps = zod.infer<typeof TimestampsSchema>;
+export type Party = zod.infer<typeof PartySchema>;
+export type Assets = zod.infer<typeof AssetsSchema>;
+export type Secrets = zod.infer<typeof SecretsSchema>;
+export type Button = zod.infer<typeof ButtonSchema>;
 
 export enum ActivityType {
 	Playing = 0,

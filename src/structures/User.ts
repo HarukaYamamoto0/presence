@@ -1,24 +1,6 @@
-export interface User {
-	id: string;
-	username: string;
-	discriminator: string;
-	global_name?: string | null;
-	avatar?: string | null;
-	avatar_decoration_data?: {
-		asset: string;
-		sku_id?: string | null;
-	} | null;
-	bot: boolean;
-	flags?: number | null;
-	premium_type?: number | null;
-}
+import * as zod from 'zod';
+import {UserSchema} from "../schema/common";
+import {ReadyEventSchema} from "../schema/events";
 
-export interface ReadyData {
-	v: number;
-	config: {
-		cdn_host?: string;
-		api_endpoint: string;
-		environment: string;
-	};
-	user: User;
-}
+export type User = zod.infer<typeof UserSchema>;
+export type ReadyData = zod.infer<typeof ReadyEventSchema>;

@@ -1,5 +1,7 @@
 import EventEmitter from "node:events"
 import {TransportFactory} from "../transports/TransportFactory";
+import {ReadyEventSchema, ErrorEventSchema} from "../schema/events";
+import {SetActivityResponseSchema} from "../schema/commands";
 import {OPCODE} from "../protocols/opcodes";
 import {encode} from "../protocols/encode";
 import {Decoder} from "../protocols/Decoder";
@@ -107,11 +109,17 @@ export class PresenceClient extends EventEmitter {
 				if (msg.opcode === OPCODE.FRAME && msg.data.nonce === nonce) {
 					this.off("message" as any, handler);
 					if (msg.data.evt === "ERROR") {
-						reject(new Error(msg.data.data.message || "Failed to set activity"));
+						const result = ErrorEventSchema.safeParse(msg.data.data);
+						reject(new Error(result.success ? result.data.message : "Failed to set activity"));
 					} else {
-						const updatedActivity = msg.data.data as Activity;
-						this.emit(Events.ActivityUpdate, updatedActivity);
-						resolve(updatedActivity);
+						const result = SetActivityResponseSchema.safeParse(msg.data.data);
+						if (result.success) {
+							const updatedActivity = result.data;
+							this.emit(Events.ActivityUpdate, updatedActivity);
+							resolve(updatedActivity);
+						} else {
+							reject(new Error("Invalid SET_ACTIVITY response: " + result.error.message));
+						}
 					}
 				}
 			};
@@ -167,10 +175,18 @@ export class PresenceClient extends EventEmitter {
 
 	private handleMessage(msg: { opcode: OPCODE; data: any }) {
 		if (msg.opcode === OPCODE.FRAME) {
-			const {evt, data} = msg.data || {};
+			const {evt, data, nonce} = msg.data || {};
 			if (evt === "READY") {
-				this._ready = true;
-				this.emit(Events.Ready, data as ReadyData);
+				const result = ReadyEventSchema.safeParse(data);
+				if (result.success) {
+					this._ready = true;
+					this.emit(Events.Ready, result.data);
+				} else {
+					this.emit(Events.Error, new Error("Invalid READY payload: " + result.error.message));
+				}
+			} else if (evt === "ERROR") {
+				const result = ErrorEventSchema.safeParse(data);
+				this.emit(Events.Error, new Error(result.success ? result.data.message : "Unknown Discord error"));
 			}
 		} else if (msg.opcode === OPCODE.CLOSE) {
 			this.disconnect();
