@@ -1,42 +1,58 @@
-# sdas
+# Dispipe Monorepo
 
-```TypeScript
-import {ClientRP, LogLevel, Events} from "@harukadev/presence"
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Bun](https://img.shields.io/badge/Bun-%23000000.svg?style=flat&logo=bun&logoColor=white)](https://bun.sh)
 
-const clientRP = new ClientRP({
-	clientId: "280984871685062656",
-	logger: LogLevel.All
-})
+A modular and robust Discord Rich Presence ecosystem for JavaScript/TypeScript.
 
-client.on(Events.Ready, () => {
-	console.log("> Successfully connected ✅")
-})
+## 📦 Packages
 
-client.on(Events.Error, (error) => {
-	console.log("> Error found: ❌" + error)
-})
+This monorepo contains the following packages:
 
-client.on(Events.Disconnect, () => {
-	console.log("> Disconnect successfully ✅")
-})
+- **[@dispipe/presence](./packages/core)**: The main Rich Presence client with IPC/WebSocket support and fluent builder API.
+- **[@dispipe/protocol](./packages/protocol)**: The shared source of truth for Discord RPC schemas (Zod), constants, and TypeScript definitions.
 
-client.connect() // try connecting to the current instance of Discord
+## 🚀 Key Features
 
-const presence = new Presence({
-	name: "string",
-	state: "string",
-	details: "string",
-	details_url: "string",
-	timestamps: "Timestamps",
-	party: "Party",
-	assets: "Assets",
-	secrets: "Secrets",
-	buttons: "Button[]",
-	type: "ActivityType",
-	status_display_type: "StatusDisplayType",
-})
+- **Multi-platform Transport:** Automatic discovery and connection via IPC (Unix/Windows) with WebSocket fallback.
+- **Strong Validation:** Full Zod validation for all RPC commands and events, ensuring protocol compliance.
+- **Fluent API:** Clean, chaining builders for Activities, Assets, Buttons, and more.
+- **Structured Logging:** High-performance logging using [pino](https://github.com/pinojs/pino) with customizable levels.
 
-await client.updatePresence(presence) // before sending, it checks if there is an active connection
+## 🛠️ Getting Started (Monorepo Development)
 
-client.disconnect() // close the connection to Discord
+This project uses [Bun](https://bun.sh) for managing dependencies and workspaces.
+
+### Prerequisites
+
+- [Bun](https://bun.sh/docs/installation) (v1.0.0 or higher)
+
+### Installation
+
+```bash
+bun install
 ```
+
+### Build
+
+Build all packages in the correct order:
+
+```bash
+bun run build
+```
+
+### Running Example
+
+You can run the example script in the root to test the library in real-time:
+
+```bash
+bun run example.ts
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see our [Contributing Guide](./CONTRIBUTING.md) for more details.
+
+## 📄 License
+
+This project is licensed under the MIT License – see the [LICENSE](./LICENSE) file for details.

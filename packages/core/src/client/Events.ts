@@ -1,5 +1,4 @@
-import {Activity} from "../structures/Activity";
-import {ReadyData} from "../structures/User";
+import {Activity, ReadyData} from "@dispipe/protocol";
 
 /**
  * Internal events emitted by PresenceClient for the end user.

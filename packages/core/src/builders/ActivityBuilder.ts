@@ -1,22 +1,29 @@
-import {Activity, ActivityType, Assets, Button, Party, Secrets, Timestamps} from "../structures/Activity";
+import {
+	Activity,
+	ActivityType,
+	Assets,
+	Button,
+	Party,
+	Secrets,
+	Timestamps,
+	AssetsBuilder,
+	ButtonBuilder,
+	PartyBuilder,
+	SecretsBuilder,
+	TimestampsBuilder,
+	ActivitySchema,
+	TimestampsSchema,
+	PartySchema,
+	AssetsSchema,
+	SecretsSchema,
+	ButtonSchema
+} from "@dispipe/protocol";
 
 /**
  * Fluent builder for creating Discord Rich Presence activities.
- *
- * @example
- * ```TypeScript
- * const activity = new ActivityBuilder()
- *   .setName('My Awesome App')
- *   .setDetails('Developing...')
- *   .setState('In Beta')
- *   .setLargeImage('logo', 'App Logo')
- *   .setStartTimestamp(new Date())
- *   .addButton({ label: 'Visit Website', url: 'https://example.com' })
- *   .build();
- * ```
  */
 export class ActivityBuilder {
-	private activity: Activity = {};
+	private activity: any = {};
 
 	/**
 	 * Sets the name of the activity.
@@ -29,7 +36,7 @@ export class ActivityBuilder {
 
 	/**
 	 * Sets the state of the activity.
-	 * @param state The state of the activity (e.g. "In a party").
+	 * @param state The state of the activity (e.g. "At a party").
 	 */
 	setState(state: string): this {
 		this.activity.state = state;
@@ -65,10 +72,10 @@ export class ActivityBuilder {
 
 	/**
 	 * Sets the timestamps for the activity.
-	 * @param timestamps Timestamps object.
+	 * @param timestamps Timestamps object or builder.
 	 */
-	setTimestamps(timestamps: Timestamps): this {
-		this.activity.timestamps = timestamps;
+	setTimestamps(timestamps: Timestamps | TimestampsBuilder): this {
+		this.activity.timestamps = timestamps instanceof TimestampsBuilder ? timestamps.toJSON() : TimestampsSchema.parse(timestamps);
 		return this;
 	}
 
@@ -98,19 +105,19 @@ export class ActivityBuilder {
 
 	/**
 	 * Sets the party information for the activity.
-	 * @param party Party object.
+	 * @param party Party object or builder.
 	 */
-	setParty(party: Party): this {
-		this.activity.party = party;
+	setParty(party: Party | PartyBuilder): this {
+		this.activity.party = party instanceof PartyBuilder ? party.toJSON() : PartySchema.parse(party);
 		return this;
 	}
 
 	/**
 	 * Sets the assets for the activity.
-	 * @param assets Assets object.
+	 * @param assets Assets object or builder.
 	 */
-	setAssets(assets: Assets): this {
-		this.activity.assets = assets;
+	setAssets(assets: Assets | AssetsBuilder): this {
+		this.activity.assets = assets instanceof AssetsBuilder ? assets.toJSON() : AssetsSchema.parse(assets);
 		return this;
 	}
 
@@ -144,25 +151,30 @@ export class ActivityBuilder {
 
 	/**
 	 * Sets the secrets for joining and spectating.
-	 * @param secrets Secrets object.
+	 * @param secrets Secrets object or builder.
 	 */
-	setSecrets(secrets: Secrets): this {
-		this.activity.secrets = secrets;
+	setSecrets(secrets: Secrets | SecretsBuilder): this {
+		this.activity.secrets = secrets instanceof SecretsBuilder ? secrets.toJSON() : SecretsSchema.parse(secrets);
 		return this;
 	}
 
 	/**
 	 * Adds a button to the activity.
-	 * @param button Button object.
+	 * @param button Button object or builder.
 	 */
-	addButton(button: Button): this {
+	addButton(button: Button | ButtonBuilder): this {
 		if (!this.activity.buttons) this.activity.buttons = [];
-		this.activity.buttons.push(button);
+		const buttonObj = button instanceof ButtonBuilder ? button.toJSON() : ButtonSchema.parse(button);
+		this.activity.buttons.push(buttonObj);
 		return this;
 	}
 
 	/**
 	 * Sets the activity type.
+	 * 
+	 * Note: For Rich Presence via RPC, only Playing (0), Listening (2), 
+	 * Watching (3), and Competing (5) are supported.
+	 * 
 	 * @param type ActivityType enum value.
 	 */
 	setType(type: ActivityType): this {
@@ -180,10 +192,23 @@ export class ActivityBuilder {
 	}
 
 	/**
+	 * Validates and returns the final activity object.
+	 * @throws Error if the activity name is not set.
+	 * @returns The constructed Activity object.
+	 */
+	toJSON(): Activity {
+		if (!this.activity.name) {
+			throw new Error('ActivityBuilder requires name to be set.');
+		}
+		return ActivitySchema.parse(this.activity) as Activity;
+	}
+
+	/**
 	 * Builds the final activity object.
+	 * Alias for toJSON().
 	 * @returns The constructed Activity object.
 	 */
 	build(): Activity {
-		return {...this.activity};
+		return this.toJSON();
 	}
 }

@@ -2,15 +2,21 @@ import * as zod from 'zod';
 import EventEmitter from "node:events"
 import crypto from "node:crypto";
 import {TransportFactory} from "../transports/TransportFactory";
-import {ReadyEventSchema, ErrorEventSchema} from "../schema/events";
-import {SetActivityResponseSchema} from "../schema/commands";
+import {
+	ReadyEventSchema,
+	ErrorEventSchema,
+	SetActivityResponseSchema,
+	Activity,
+	ActivitySchema,
+	ReadyData,
+	OpCodes,
+	RpcCommands,
+	RpcEvents
+} from "@dispipe/protocol";
 import {encode} from "../protocols/encode";
 import {Decoder} from "../protocols/Decoder";
 import {Events, EventPayloads} from "./Events";
 import {Transport} from "../types/transport";
-import {Activity} from "../structures/Activity";
-import {ReadyData} from "../structures/User";
-import {OpCodes, RpcCommands, RpcEvents} from "../constants";
 import {Logger, createDefaultLogger, LogLevel} from "../utils/Logger";
 
 /**
@@ -137,6 +143,7 @@ export class PresenceClient extends EventEmitter {
 	 * @example
 	 * ```TypeScript
 	 * await client.setActivity({
+	 *   name: 'Discord Game',
 	 *   state: 'Playing with my friends',
 	 *   details: 'In a competitive match',
 	 *   assets: {
@@ -151,9 +158,11 @@ export class PresenceClient extends EventEmitter {
 			throw new Error("Client is not ready. Call connect() first.");
 		}
 
+		const validatedActivity = ActivitySchema.parse(activity);
+
 		const response = await this.sendCommand(RpcCommands.SET_ACTIVITY, {
 			pid,
-			activity
+			activity: validatedActivity
 		}, SetActivityResponseSchema);
 
 		this.emit(Events.ActivityUpdate, response);

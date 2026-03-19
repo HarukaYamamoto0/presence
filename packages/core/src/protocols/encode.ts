@@ -1,4 +1,4 @@
-import {OpCodes} from "../constants";
+import {OpCodes} from "@dispipe/protocol";
 
 export function encode(opcode: OpCodes, payload: object): Buffer {
 	const json = Buffer.from(JSON.stringify(payload));

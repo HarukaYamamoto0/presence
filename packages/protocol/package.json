@@ -1,0 +1,13 @@
+{
+  "name": "@dispipe/protocol",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "private": false,
+  "scripts": {
+	"build": "tsc"
+  },
+  "dependencies": {
+	"zod": "^4.3.6"
+  }
+}

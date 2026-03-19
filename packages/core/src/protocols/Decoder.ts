@@ -1,4 +1,4 @@
-import {OpCodes} from "../constants";
+import {OpCodes} from "@dispipe/protocol";
 
 export class Decoder {
 	private buffer = Buffer.alloc(0);
