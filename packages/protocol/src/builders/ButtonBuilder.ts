@@ -27,8 +27,12 @@ export class ButtonBuilder {
 
     /**
      * Validates and returns the final button object.
+     * @throws Error if the button does not have both label and url.
      */
     toJSON(): Button {
+        if (!this.button.label || !this.button.url) {
+            throw new Error('ButtonBuilder requires both label and url to be set.');
+        }
         return ButtonSchema.parse(this.button) as Button;
     }
 }

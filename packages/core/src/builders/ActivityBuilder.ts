@@ -193,9 +193,13 @@ export class ActivityBuilder {
 
 	/**
 	 * Validates and returns the final activity object.
+	 * @throws Error if the activity name is not set.
 	 * @returns The constructed Activity object.
 	 */
 	toJSON(): Activity {
+		if (!this.activity.name) {
+			throw new Error('ActivityBuilder requires name to be set.');
+		}
 		return ActivitySchema.parse(this.activity) as Activity;
 	}
 
