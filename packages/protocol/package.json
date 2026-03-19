@@ -42,7 +42,8 @@
   },
   "homepage": "https://github.com/HarukaYamamoto0/dispipe/tree/main/packages/protocol#readme",
   "scripts": {
-	"build": "tsc"
+	"build": "tsc",
+	"publish:pkg": "npm publish"
   },
   "dependencies": {
 	"zod": "^3.23.8"

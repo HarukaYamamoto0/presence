@@ -42,7 +42,8 @@
   },
   "homepage": "https://github.com/HarukaYamamoto0/dispipe/tree/main/packages/core#readme",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "publish:pkg": "npm publish"
   },
   "dependencies": {
     "@dispipe/protocol": "^0.1.1",

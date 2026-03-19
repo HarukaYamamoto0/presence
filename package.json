@@ -1,6 +1,6 @@
 {
   "name": "dispipe-monorepo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "workspaces": [
     "packages/*"
@@ -8,7 +8,7 @@
   "scripts": {
     "build": "bun run --filter \"*\" build",
     "test": "bun test --filter \"*\"",
-    "release": "bun run build && bun run --filter \"*\" publish"
+    "release": "bun run build && bun run --filter @dispipe/protocol publish:pkg && bun run --filter @dispipe/presence publish:pkg"
   },
   "dependencies": {
     "@types/node": "^25.5.0"
