@@ -1,16 +1,12 @@
+// Re-export from protocol
+export * from '@dispipe/protocol';
+
 // Client and Events
 export * from './client/PresenceClient';
 export * from "./client/Events";
 
 // Builders
 export * from "./builders/ActivityBuilder";
-
-// Data Structures
-export * from "./structures/Activity";
-export * from "./structures/User";
-
-// Constants and Enums
-export * from "./constants";
 
 // Logger
 export * from "./utils/Logger";
