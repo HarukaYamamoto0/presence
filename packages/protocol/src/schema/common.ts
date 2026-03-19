@@ -15,20 +15,20 @@ export const UserSchema = zod.object({
 		.nullable()
 		.optional(),
 	bot: zod.boolean().optional(),
-	flags: zod.int().nullable().optional(),
-	premium_type: zod.int().nullable().optional(),
+	flags: zod.number().int().nullable().optional(),
+	premium_type: zod.number().int().nullable().optional(),
 });
 
-export const ActivityTypeSchema = zod.enum(ActivityType);
+export const ActivityTypeSchema = zod.nativeEnum(ActivityType);
 
 export const TimestampsSchema = zod.object({
-	start: zod.int().optional(),
-	end: zod.int().optional(),
+	start: zod.number().int().optional(),
+	end: zod.number().int().optional(),
 });
 
 export const PartySchema = zod.object({
 	id: zod.string().optional(),
-	size: zod.array(zod.int()).length(2).optional(),
+	size: zod.array(zod.number().int()).length(2).optional(),
 });
 
 const imageExtensionRegex = /\.(png|jpe?g)(\?.*)?$/i;
@@ -48,7 +48,7 @@ export const AssetsSchema = zod.object({
 		.nullable()
 		.optional(),
 	large_text: zod.string().max(128).nullable().optional(),
-	large_url: zod.url().max(512).nullable().optional(),
+	large_url: zod.string().url().max(512).nullable().optional(),
 	/**
 	 * Small image key or URL. Only supports png, jpg, and jpeg formats.
 	 */
@@ -63,7 +63,7 @@ export const AssetsSchema = zod.object({
 		.nullable()
 		.optional(),
 	small_text: zod.string().max(128).nullable().optional(),
-	small_url: zod.url().max(512).nullable().optional(),
+	small_url: zod.string().url().max(512).nullable().optional(),
 });
 
 export const SecretsSchema = zod.object({
@@ -75,7 +75,7 @@ export const SecretsSchema = zod.object({
 export const ButtonSchema = zod.union([
 	zod.object({
 		label: zod.string().min(1).max(32),
-		url: zod.url().max(512),
+		url: zod.string().url().max(512),
 	}),
 	zod.string().max(32),
 ]);
@@ -84,9 +84,9 @@ export const ActivitySchema = zod.object({
 	name: zod.string().min(1).max(128),
 	application_id: zod.string().nullable().optional(),
 	state: zod.string().max(128).nullable().optional(),
-	state_url: zod.url().max(512).nullable().optional(),
+	state_url: zod.string().url().max(512).nullable().optional(),
 	details: zod.string().max(128).nullable().optional(),
-	details_url: zod.url().max(512).nullable().optional(),
+	details_url: zod.string().url().max(512).nullable().optional(),
 	timestamps: TimestampsSchema.nullable().optional(),
 	party: PartySchema.nullable().optional(),
 	assets: AssetsSchema.nullable().optional(),
@@ -103,6 +103,6 @@ export const ActivitySchema = zod.object({
 		zod.literal(ActivityType.Competing),
 	]).optional().default(ActivityType.Playing),
 	instance: zod.boolean().nullable().optional(),
-	flags: zod.int().nullable().optional(),
-	created_at: zod.int().nullable().optional(),
+	flags: zod.number().int().nullable().optional(),
+	created_at: zod.number().int().nullable().optional(),
 });

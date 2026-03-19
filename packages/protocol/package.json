@@ -1,13 +1,50 @@
 {
   "name": "@dispipe/protocol",
   "version": "1.0.0",
+  "description": "Discord RPC protocol schemas and constants for JavaScript/TypeScript",
+  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "private": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HarukaYamamoto0/dispipe.git",
+    "directory": "packages/protocol"
+  },
+  "keywords": [
+    "discord",
+    "rpc",
+    "protocol",
+    "zod",
+    "validation",
+    "typescript"
+  ],
+  "author": "HarukaYamamoto0",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/HarukaYamamoto0/dispipe/issues"
+  },
+  "homepage": "https://github.com/HarukaYamamoto0/dispipe/tree/main/packages/protocol#readme",
   "scripts": {
-	"build": "tsc"
+    "build": "tsc"
   },
   "dependencies": {
-	"zod": "^4.3.6"
+    "zod": "^3.23.8"
   }
 }
