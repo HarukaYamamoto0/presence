@@ -71,7 +71,7 @@ try {
 		// Configure Party (Group/Lobby information)
 		.setParty(new PartyBuilder()
 			.setId('my-awesome-party-id')
-			.setSize(1, 9007199254740991)) // 1 out of 5 slots filled
+			.setSize(1, 5)) // 1 out of 5 slots filled
 
 		// Add Interactive Buttons (Max 2)
 		.addButton(new ButtonBuilder()
