@@ -143,6 +143,7 @@ export class PresenceClient extends EventEmitter {
 	 * @example
 	 * ```TypeScript
 	 * await client.setActivity({
+	 *   name: 'Discord Game',
 	 *   state: 'Playing with my friends',
 	 *   details: 'In a competitive match',
 	 *   assets: {

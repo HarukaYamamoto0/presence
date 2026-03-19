@@ -36,7 +36,7 @@ export class ActivityBuilder {
 
 	/**
 	 * Sets the state of the activity.
-	 * @param state The state of the activity (e.g. "In a party").
+	 * @param state The state of the activity (e.g. "At a party").
 	 */
 	setState(state: string): this {
 		this.activity.state = state;
