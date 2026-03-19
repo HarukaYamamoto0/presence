@@ -10,7 +10,7 @@ import {
 	PartyBuilder,
 	LogLevel,
 	ActivityType
-} from "./packages/core/src/index"
+} from "./packages/presence/src/index"
 
 /**
  * Example usage of @dispipe/presence

@@ -9,7 +9,7 @@ A modular and robust Discord Rich Presence ecosystem for JavaScript/TypeScript.
 
 This monorepo contains the following packages:
 
-- **[@dispipe/presence](./packages/core)**: The main Rich Presence client with IPC/WebSocket support and fluent builder API.
+- **[@dispipe/presence](packages/presence)**: The main Rich Presence client with IPC/WebSocket support and fluent builder API.
 - **[@dispipe/protocol](./packages/protocol)**: The shared source of truth for Discord RPC schemas (Zod), constants, and TypeScript definitions.
 
 ## 🚀 Key Features
