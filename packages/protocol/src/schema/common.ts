@@ -101,7 +101,7 @@ export const ActivitySchema = zod.object({
 		zod.literal(ActivityType.Listening),
 		zod.literal(ActivityType.Watching),
 		zod.literal(ActivityType.Competing),
-	]).optional().default(ActivityType.Playing),
+	]).optional(),
 	instance: zod.boolean().nullable().optional(),
 	flags: zod.number().int().nullable().optional(),
 	created_at: zod.number().int().nullable().optional(),
