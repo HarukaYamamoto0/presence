@@ -9,7 +9,15 @@
     "skipLibCheck": true,
     "declaration": true,
     "sourceMap": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@dispipe/protocol": [
+        "packages/protocol/src/index.ts"
+      ]
+    }
   },
-  "include": ["packages/**/*.ts", "vitest.config.ts"]
+  "include": [
+    "packages/**/*.ts",
+    "vitest.config.ts"
+  ]
 }
