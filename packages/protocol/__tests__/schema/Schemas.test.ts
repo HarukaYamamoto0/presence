@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { UserSchema, ActivitySchema } from '@dispipe/protocol';
 
 /**
@@ -28,7 +28,7 @@ describe('Schemas', () => {
             const activity = { name: 'Test Game' };
             const result = ActivitySchema.parse(activity);
             expect(result.name).toBe('Test Game');
-            // type is optional, if not provided it won't be in the object unless defaulted
+            // type is optional, if not proided, it won't be in the object unless defaulted
         });
 
         it('should fail if name is missing', () => {

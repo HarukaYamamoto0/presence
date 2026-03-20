@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ButtonBuilder } from '@dispipe/protocol';
 import { PartyBuilder } from '@dispipe/protocol';
 import { SecretsBuilder } from '@dispipe/protocol';

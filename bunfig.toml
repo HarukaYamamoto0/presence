@@ -1,0 +1,3 @@
+[test]
+include = ["packages/**/*.test.ts"]
+exclude = ["context/**", "**/node_modules/**", "**/dist/**"]

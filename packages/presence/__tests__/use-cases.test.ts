@@ -1,11 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { PresenceClient } from '../src/client/PresenceClient';
 import { Events } from '../src/client/Events';
 import { ActivityBuilder } from '../src/builders/ActivityBuilder';
 import { Transport } from '../src/types/transport';
 import { OpCodes } from '@dispipe/protocol';
 import { encode } from '../src/protocols/encode';
-import { vi } from 'vitest';
 
 /**
  * Mock Transport for Use Case Tests
