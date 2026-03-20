@@ -42,8 +42,8 @@
   },
   "homepage": "https://github.com/HarukaYamamoto0/dispipe/tree/main/packages/protocol#readme",
   "scripts": {
-	"build": "tsc",
-	"test": "vitest run",
+ "build": "tsc -p tsconfig.json",
+ "test": "vitest run",
 	"publish:pkg": "npm publish"
   },
   "dependencies": {

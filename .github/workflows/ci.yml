@@ -30,5 +30,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Type check
+        run: npx tsc --noEmit
+
       - name: Run tests
-        run: bun test --coverage
+        run: bun run test:coverage

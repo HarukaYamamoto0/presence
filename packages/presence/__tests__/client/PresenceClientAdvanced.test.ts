@@ -237,4 +237,31 @@ describe('PresenceClient Advanced', () => {
         
         await expect(promise).rejects.toThrow('Manual Reject');
     });
+
+    it('should throw error if connecting when already ready', async () => {
+        const transport = new MockTransport();
+        const client = new PresenceClient({ clientId: '123', transport });
+        
+        const connectPromise = client.connect();
+        transport.simulateResponse(OpCodes.FRAME, { 
+            evt: 'READY', 
+            data: { v: 1, config: { api_endpoint: '//d', environment: 'p' }, user: { id: '1', username: 'u', discriminator: '0001' } }, 
+            nonce: null 
+        });
+        await connectPromise;
+
+        await expect(client.connect()).rejects.toThrow('Client is already connected.');
+    });
+
+    it('should reject connect if transport closes before ready', async () => {
+        const transport = new MockTransport();
+        const client = new PresenceClient({ clientId: '123', transport });
+        
+        const connectPromise = client.connect();
+        
+        // Simulate transport close instead of READY
+        transport.close();
+        
+        await expect(connectPromise).rejects.toThrow('Connection closed before ready.');
+    });
 });
