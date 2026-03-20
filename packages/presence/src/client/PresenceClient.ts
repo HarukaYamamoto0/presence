@@ -115,9 +115,8 @@ export class PresenceClient extends EventEmitter {
 		});
 
 		this.emit(Events.Connected, undefined as any);
-		await this.sendHandshake();
 
-		return new Promise((resolve, reject) => {
+		const readyPromise = new Promise<this>((resolve, reject) => {
 			const onReady = (data: ReadyData) => {
 				this.off(Events.Disconnect, onDisconnect);
 				this.logger.info(`Connected as ${data.user.username}#${data.user.discriminator}`);
@@ -132,6 +131,10 @@ export class PresenceClient extends EventEmitter {
 			this.once(Events.Ready, onReady as any);
 			this.once(Events.Disconnect, onDisconnect);
 		});
+
+		await this.sendHandshake();
+
+		return readyPromise;
 	}
 
 	/**
@@ -231,12 +234,19 @@ export class PresenceClient extends EventEmitter {
 		if (!this.transport && !this._ready) return;
 
 		this.logger.info("Disconnecting...");
-		if (this.transport) {
-			this.transport.close();
-			this.transport = undefined;
+
+		const transport = this.transport;
+		this.transport = undefined;
+		this._ready = false;
+
+		if (transport) {
+			try {
+				transport.close();
+			} catch (e) {
+				this.logger.error("Error closing transport", e);
+			}
 		}
 
-		this._ready = false;
 		this.emit(Events.Disconnect, undefined as any);
 	}
 

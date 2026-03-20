@@ -7,13 +7,17 @@
   ],
   "scripts": {
     "build": "bun run --filter \"*\" build",
-    "test": "bun test --filter \"*\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "release": "bun run build && bun run --filter @dispipe/protocol publish:pkg && bun run --filter @dispipe/presence publish:pkg"
   },
-  "dependencies": {
-    "@types/node": "^25.5.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "@vitest/ui": "^4.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.0"
   }
 }

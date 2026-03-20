@@ -11,3 +11,4 @@ bun.lockb
 context/
 !.idea/dictionaries/
 *.tsbuildinfo
+coverage/
